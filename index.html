@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>SafeWorker · Industrial Safety OS</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#04080f"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ══ TOKENS ══ */
+:root{
+  --bg0:#04080f;--bg1:#070d18;--bg2:#0b1220;--bg3:#0e1828;--bg4:#131f32;
+  --panel:#0d1826;--panel2:#111e2e;
+  --text:#c8dcf5;--text2:#6e8fb5;--text3:#334d6e;
+  --border:#0e1e35;--border2:#17304f;--border3:#1e3d62;
+  --blue:#1e90ff;--blue2:#1470d4;--blue3:#0a4a9a;
+  --sky:#38bdf8;--cyan:#00e5ff;--teal:#00d4b4;
+  --amber:#ffb800;--amber2:#cc8f00;
+  --red:#ff3d3d;--red2:#cc1a1a;
+  --green:#22ff88;--green2:#00cc55;
+  --violet:#a78bfa;
+  --orb:'Orbitron',sans-serif;--exo:'Exo 2',sans-serif;--mono:'Share Tech Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden}
+body{font-family:var(--exo);background:var(--bg0);color:var(--text);position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(30,144,255,0.028) 1px,transparent 1px),linear-gradient(90deg,rgba(30,144,255,0.028) 1px,transparent 1px);background-size:44px 44px;animation:gridMove 30s linear infinite;pointer-events:none;z-index:0}
+@keyframes gridMove{from{background-position:0 0}to{background-position:44px 44px}}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 800px 600px at 20% 10%,rgba(30,144,255,0.055),transparent),radial-gradient(ellipse 600px 500px at 80% 85%,rgba(0,229,255,0.035),transparent),radial-gradient(ellipse 400px 300px at 50% 50%,rgba(10,74,154,0.07),transparent);pointer-events:none;z-index:0}
+
+/* ══ SCREENS ══ */
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;transition:opacity 0.7s ease,transform 0.7s ease}
+.screen.hidden{opacity:0;pointer-events:none;transform:scale(1.03)}
+
+/* ══ SPLASH ══ */
+#splashScreen{background:var(--bg0);flex-direction:column;z-index:20}
+.splash-wrap{display:flex;flex-direction:column;align-items:center}
+.hex-logo{width:140px;height:162px;margin-bottom:4px}
+.hex-logo svg{width:100%;height:100%}
+.splash-title{font-family:var(--orb);font-size:clamp(20px,5vw,34px);font-weight:900;letter-spacing:8px;text-transform:uppercase;color:var(--text);animation:fadeUp 0.7s ease 1.2s both}
+.splash-tag{font-family:var(--mono);font-size:10px;color:var(--blue);letter-spacing:4px;text-transform:uppercase;margin-top:5px;animation:fadeUp 0.7s ease 1.5s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.boot-wrap{width:min(290px,85vw);margin-top:36px;animation:fadeUp 0.5s ease 1.8s both}
+.boot-hdr{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between}
+.boot-track{height:2px;background:var(--border2);border-radius:2px;overflow:hidden}
+.boot-fill{height:100%;background:linear-gradient(90deg,var(--blue3),var(--blue),var(--sky));width:0%;transition:width 0.35s ease;box-shadow:0 0 12px var(--blue)}
+.boot-log{margin-top:14px;display:flex;flex-direction:column;gap:5px;font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px;min-height:68px}
+.boot-row{display:flex;gap:8px;align-items:center;animation:stepIn 0.3s ease both}
+@keyframes stepIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.b-ok{color:var(--blue)}.b-ld{color:var(--amber);animation:blink 0.6s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ══ LOGIN ══ */
+#loginScreen{background:var(--bg0);flex-direction:column;z-index:15}
+.login-card{width:min(400px,92vw);background:var(--panel);border:1px solid var(--border2);border-top:3px solid var(--blue);border-radius:16px;overflow:hidden;box-shadow:0 0 90px rgba(30,144,255,0.09),0 40px 80px rgba(0,0,0,0.75)}
+.login-head{padding:24px 26px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px}
+.login-icon{width:46px;height:46px;flex:0 0 auto}
+.lh-t1{font-family:var(--orb);font-size:17px;font-weight:700;letter-spacing:2px;color:var(--text)}
+.lh-t2{font-family:var(--mono);font-size:9px;color:var(--blue);letter-spacing:2px;margin-top:3px;text-transform:uppercase}
+.login-body{padding:22px 26px 26px;display:flex;flex-direction:column;gap:14px}
+.fl{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
+.fi{width:100%;padding:11px 14px;background:var(--bg1);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:14px;letter-spacing:2px;outline:none;transition:border-color 0.2s,box-shadow 0.2s}
+.fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,144,255,0.08)}
+.fi.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,61,61,0.09)}
+.login-err{font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:1px;text-align:center;min-height:14px;animation:shake 0.4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.login-btn{width:100%;padding:13px;background:var(--blue3);border:1px solid var(--blue2);border-radius:8px;color:var(--text);font-family:var(--orb);font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;box-shadow:0 0 24px rgba(30,144,255,0.22)}
+.login-btn:hover{background:var(--blue2);box-shadow:0 0 38px rgba(30,144,255,0.4)}
+.login-btn:active{transform:scale(0.98)}
+.login-hint{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px;text-align:center;line-height:1.9}
+
+/* ══ DASHBOARD ══ */
+#dashScreen{position:fixed;inset:0;display:flex;flex-direction:column;z-index:10;overflow:hidden;opacity:1}
+#dashScreen.hidden{opacity:0;pointer-events:none}
+
+/* ── TOPBAR ── */
+.topbar{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:0 14px;height:58px;background:var(--bg1);border-bottom:1px solid var(--border2);position:relative;z-index:5}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 0%,var(--blue3) 25%,var(--blue) 50%,var(--blue3) 75%,transparent 100%);box-shadow:0 0 10px var(--blue3)}
+.tb-brand{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.tb-hex{width:34px;height:34px}
+.n1{font-family:var(--orb);font-size:15px;font-weight:700;letter-spacing:3px;color:var(--text)}
+.n2{font-family:var(--mono);font-size:8px;color:var(--blue);letter-spacing:2px}
+.tb-gap{flex:1}
+.tp{display:flex;align-items:center;gap:5px;padding:4px 9px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px;white-space:nowrap}
+.tp .dot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex:0 0 auto}
+.tp b{color:var(--text)}
+.tb-worker{display:flex;align-items:center;gap:7px;padding:5px 10px;background:var(--bg3);border:1px solid var(--blue3);border-radius:7px}
+.tb-av{width:26px;height:26px;border-radius:50%;background:var(--blue3);display:grid;place-items:center;font-family:var(--orb);font-size:10px;font-weight:700;color:var(--text);flex:0 0 auto;box-shadow:0 0 8px rgba(30,144,255,0.3)}
+.tb-wn{font-family:var(--mono);font-size:10px;color:var(--text);letter-spacing:1px}
+.tb-wi{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px}
+.tb-btn{padding:6px 11px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--text2);font-family:var(--exo);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:border-color 0.15s,color 0.15s;white-space:nowrap}
+.tb-btn:hover{border-color:var(--blue);color:var(--blue)}
+.tb-btn.notif-on{border-color:var(--blue);color:var(--blue);background:rgba(30,144,255,0.06)}
+.tb-logout{display:flex;align-items:center;gap:5px;padding:5px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;font-family:var(--mono);font-size:9px;color:var(--text3);cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.tb-logout:hover{border-color:var(--red2);color:var(--red)}
+
+/* ── HACI ALERT BANNER ── */
+#haciAlert{display:none;background:rgba(255,184,0,0.10);border-bottom:1px solid rgba(255,184,0,0.25);padding:7px 14px;font-family:var(--mono);font-size:11px;color:var(--amber);letter-spacing:1px;text-align:center;animation:alertPulse 2s ease-in-out infinite;flex:0 0 auto}
+#haciAlert.crit{background:rgba(255,61,61,0.12);border-color:rgba(255,61,61,0.3);color:var(--red);animation:alertPulse 1s ease-in-out infinite}
+@keyframes alertPulse{0%,100%{opacity:1}50%{opacity:0.6}}
+
+/* ── BODY LAYOUT ── */
+.dash-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px;display:grid;grid-template-columns:1fr 310px;gap:10px;align-content:start}
+@media(max-width:860px){.dash-body{grid-template-columns:1fr}}
+.dash-body::-webkit-scrollbar{width:3px}.dash-body::-webkit-scrollbar-track{background:var(--bg1)}.dash-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── SEC LABEL ── */
+.sl{display:flex;align-items:center;gap:7px;font-family:var(--orb);font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);padding-bottom:7px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.sl::before{content:'';width:3px;height:11px;background:var(--blue);border-radius:2px;box-shadow:0 0 7px var(--blue)}
+
+/* ── HERO CARD ── */
+.hero-card{background:var(--panel);border:1px solid var(--border2);border-radius:14px;overflow:hidden;grid-column:1/-1;display:flex;align-items:stretch;position:relative}
+.hero-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue3),var(--blue),var(--sky),var(--blue),var(--blue3));box-shadow:0 0 16px var(--blue);z-index:1}
+
+.hero-left{flex:0 0 220px;background:var(--bg2);border-right:1px solid var(--border);padding:18px 16px;display:flex;flex-direction:column;align-items:center;gap:10px}
+@media(max-width:600px){.hero-card{flex-direction:column}.hero-left{flex:0 0 auto;border-right:none;border-bottom:1px solid var(--border)}}
+
+/* Ring */
+.rc{position:relative;width:124px;height:124px}
+.rc svg{width:100%;height:100%;transform:rotate(-90deg)}
+.rc-bg{fill:none;stroke:var(--border2);stroke-width:9}
+.rc-ring{fill:none;stroke:var(--blue);stroke-width:9;stroke-linecap:round;stroke-dasharray:338;stroke-dashoffset:338;transition:stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1),stroke 0.5s}
+/* Animated ring pulse when critical */
+.rc-ring.pulse{animation:ringPulse 1.2s ease-in-out infinite}
+@keyframes ringPulse{0%,100%{opacity:1}50%{opacity:0.55}}
+.rc-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.rc-val{font-family:var(--orb);font-size:30px;font-weight:900;color:var(--text);line-height:1;transition:color 0.5s}
+.rc-lbl{font-family:var(--mono);font-size:8px;color:var(--blue);letter-spacing:2px;margin-top:2px}
+.rc-sub{font-family:var(--mono);font-size:7px;color:var(--text3);letter-spacing:1px;margin-top:1px}
+
+/* HACI change arrow */
+.haci-delta{font-family:var(--mono);font-size:10px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.delta-up{color:var(--green)}.delta-dn{color:var(--red)}.delta-eq{color:var(--text3)}
+
+.status-pill{font-family:var(--orb);font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;padding:6px 16px;border-radius:6px;border:1px solid var(--blue3);background:rgba(30,144,255,0.08);color:var(--blue);text-align:center;width:100%;transition:all 0.4s;box-shadow:0 0 14px rgba(30,144,255,0.12)}
+
+/* HACI zone bar */
+.haci-zone{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:7px 10px}
+.haci-zone-lbl{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px;margin-bottom:5px}
+.haci-zone-bar{height:6px;background:var(--border2);border-radius:3px;overflow:hidden;position:relative}
+.haci-zone-fill{height:100%;border-radius:3px;transition:width 1.2s ease,background 0.5s;box-shadow:0 0 6px var(--blue)}
+/* Zone markers */
+.haci-markers{display:flex;justify-content:space-between;margin-top:4px}
+.haci-markers span{font-family:var(--mono);font-size:7px;color:var(--text3)}
+.haci-band-tag{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:2px;text-align:center;margin-top:4px;transition:color 0.4s}
+
+.sync-txt{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px;text-align:center;line-height:2}
+
+/* ── HERO RIGHT ── */
+.hero-right{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+
+.chips-row{display:flex;gap:5px;flex-wrap:wrap}
+.sc{display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px;transition:border-color 0.3s}
+.sc .led{width:6px;height:6px;border-radius:50%;flex:0 0 auto;background:var(--text3)}
+.sc b{color:var(--text)}
+.sc.ok .led{background:var(--blue);box-shadow:0 0 5px var(--blue)}.sc.ok b{color:var(--blue)}
+.sc.good .led{background:var(--green);box-shadow:0 0 5px var(--green)}.sc.good b{color:var(--green)}
+.sc.warn .led{background:var(--amber);box-shadow:0 0 5px var(--amber)}.sc.warn b{color:var(--amber)}
+.sc.crit .led{background:var(--red);box-shadow:0 0 7px var(--red);animation:ledP 0.8s ease-in-out infinite}.sc.crit b{color:var(--red)}
+@keyframes ledP{0%,100%{opacity:1;box-shadow:0 0 7px var(--red)}50%{opacity:0.3;box-shadow:none}}
+
+/* ── KPI GRID ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+@media(max-width:680px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 12px 12px;position:relative;overflow:hidden;transition:border-color 0.3s}
+.kpi:hover{border-color:var(--border2)}
+/* colored bottom bar */
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--kc,var(--blue3));width:var(--kw,0%);transition:width 1.1s ease,background 0.4s;box-shadow:0 0 8px var(--kc,var(--blue3))}
+.k-lbl{font-family:var(--exo);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.k-val{font-family:var(--orb);font-size:22px;font-weight:700;line-height:1;color:var(--text);display:flex;align-items:baseline;gap:2px;transition:color 0.4s}
+.k-unit{font-family:var(--mono);font-size:10px;color:var(--text3)}
+.k-note{font-family:var(--exo);font-size:9px;color:var(--text3);margin-top:4px;line-height:1.3}
+/* Threshold badge in corner */
+.k-thresh{position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;border:1px solid var(--border3);background:var(--bg3);color:var(--text3);transition:all 0.4s}
+.k-thresh.ok{color:var(--blue);border-color:rgba(30,144,255,0.3);background:rgba(30,144,255,0.07)}
+.k-thresh.good{color:var(--green);border-color:rgba(34,255,136,0.3);background:rgba(34,255,136,0.07)}
+.k-thresh.warn{color:var(--amber);border-color:rgba(255,184,0,0.3);background:rgba(255,184,0,0.07)}
+.k-thresh.crit{color:var(--red);border-color:rgba(255,61,61,0.3);background:rgba(255,61,61,0.07)}
+
+/* ── ALERT PANEL ── */
+.alert-wrap{border-radius:10px;border:1px solid var(--border2);overflow:hidden;background:var(--panel);transition:border-color 0.4s}
+.alert-top{display:flex;align-items:center;gap:9px;padding:10px 14px;background:rgba(30,144,255,0.07);border-bottom:1px solid var(--border);transition:background 0.4s}
+.a-icon{width:36px;height:36px;border-radius:7px;background:rgba(30,144,255,0.14);border:1px solid rgba(30,144,255,0.28);display:grid;place-items:center;font-size:16px;flex:0 0 auto;transition:all 0.4s}
+.a-title{font-family:var(--orb);font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;flex:1}
+.a-badge{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:2px;padding:3px 10px;border-radius:3px;border:1px solid;white-space:nowrap;transition:all 0.4s}
+.a-badge.ok{color:var(--blue);border-color:rgba(30,144,255,0.35);background:rgba(30,144,255,0.08)}
+.a-badge.good{color:var(--green);border-color:rgba(34,255,136,0.35);background:rgba(34,255,136,0.08)}
+.a-badge.warn{color:var(--amber);border-color:rgba(255,184,0,0.35);background:rgba(255,184,0,0.08)}
+.a-badge.crit{color:var(--red);border-color:rgba(255,61,61,0.35);background:rgba(255,61,61,0.08)}
+.a-detail{padding:10px 14px;font-family:var(--exo);font-size:12px;color:var(--text2);line-height:1.6}
+
+/* ── MICRO-BREAK ── */
+#mbSec{display:none;padding:12px 14px;border-top:1px solid var(--border);background:rgba(255,184,0,0.04)}
+.mb-clock{font-family:var(--orb);font-size:40px;font-weight:900;color:var(--amber);letter-spacing:6px;text-shadow:0 0 22px rgba(255,184,0,0.35);margin-bottom:10px}
+.mb-prog{height:3px;background:var(--border2);border-radius:2px;overflow:hidden;margin-bottom:10px}
+.mb-prog-fill{height:100%;background:linear-gradient(90deg,var(--amber2),var(--amber));border-radius:2px;transition:width 1s linear;box-shadow:0 0 8px var(--amber)}
+.mb-btns{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:7px}
+.mb-btn{padding:7px 14px;border-radius:5px;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);font-family:var(--orb);font-size:10px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all 0.15s}
+.mb-btn:hover{border-color:var(--amber);color:var(--amber)}
+.mb-btn.pri{background:rgba(255,184,0,0.1);border-color:var(--amber2);color:var(--amber)}
+.mb-note{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px;line-height:1.7}
+
+/* ── SHIFT SUMMARY ── */
+.shift-bar{background:var(--bg2);border-top:1px solid var(--border);padding:10px 14px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:600px){.shift-bar{grid-template-columns:repeat(2,1fr)}}
+.shift-cell{text-align:center}
+.shift-cell .sv{font-family:var(--orb);font-size:14px;font-weight:700;color:var(--text)}
+.shift-cell .sl2{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px;margin-top:2px}
+
+/* ── ENV CARD ── */
+.env-card{background:var(--panel);border:1px solid var(--border2);border-radius:14px;overflow:hidden}
+.card-head{padding:9px 14px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.env-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border)}
+.env-tile{background:var(--panel);padding:12px 14px 10px;position:relative;overflow:hidden;transition:background 0.2s}
+.env-tile:hover{background:var(--panel2)}
+.env-tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ec,var(--blue3));box-shadow:0 0 8px var(--ec,var(--blue3));transition:background 0.4s,box-shadow 0.4s}
+.e-lbl{font-family:var(--exo);font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;margin-left:8px}
+.e-val{font-family:var(--orb);font-size:20px;font-weight:700;color:var(--text);line-height:1;margin-left:8px;display:flex;align-items:baseline;gap:2px;transition:color 0.4s}
+.e-unit{font-family:var(--mono);font-size:9px;color:var(--text3)}
+.e-sub{font-family:var(--exo);font-size:9px;color:var(--text3);margin-top:3px;margin-left:8px;transition:color 0.4s}
+/* Mini sparkbar inside env tile */
+.e-bar{height:2px;background:var(--border2);border-radius:1px;margin:6px 0 0 8px;overflow:hidden}
+.e-bar-fill{height:100%;border-radius:1px;transition:width 1s ease,background 0.4s;box-shadow:0 0 5px var(--ec,var(--blue3))}
+.env-foot{padding:8px 12px;border-top:1px solid var(--border);background:var(--bg2);font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:0.5px;line-height:1.8}
+
+/* ── RULES / TIPS CARD ── */
+.rules-card{background:var(--panel);border:1px solid var(--border2);border-radius:14px;overflow:hidden}
+.tip-bar{padding:9px 12px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:7px}
+.tip-tag{font-family:var(--mono);font-size:8px;color:var(--amber);letter-spacing:1px;padding:2px 6px;border:1px solid var(--amber2);border-radius:2px;background:rgba(255,184,0,0.05);white-space:nowrap;flex:0 0 auto;margin-top:1px}
+.tip-txt{font-family:var(--exo);font-size:11px;color:var(--text2);line-height:1.4}
+.r-row{display:flex;gap:7px;align-items:flex-start;padding:7px 9px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;transition:border-color 0.2s}
+.r-row:hover{border-color:var(--border2)}
+.r-n{font-family:var(--orb);font-size:9px;font-weight:700;color:var(--blue);width:18px;flex:0 0 auto;margin-top:1px}
+.r-t{font-family:var(--exo);font-size:10px;color:var(--text2);line-height:1.4}
+.routine-blk{margin:0 10px 10px;border:1px solid var(--border);border-left:3px solid var(--blue3);border-radius:7px;background:var(--bg2);overflow:hidden}
+.routine-hd{padding:7px 10px;background:rgba(30,144,255,0.05);border-bottom:1px solid var(--border);font-family:var(--orb);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue)}
+.routine-body{padding:7px 10px;display:flex;flex-direction:column;gap:4px}
+.rs{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9px;color:var(--text3)}
+.rs-t{color:var(--blue);font-weight:700;width:28px;flex:0 0 auto}
+
+/* ── HACI HISTORY MINI CHART ── */
+.haci-history{width:100%;height:28px;position:relative;overflow:hidden}
+.haci-history canvas{width:100%;height:100%}
+
+/* ── NOTIFICATION TOAST ── */
+#toast{position:fixed;top:70px;right:14px;z-index:100;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast-item{background:var(--panel2);border:1px solid var(--border2);border-left:3px solid var(--blue);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--text);letter-spacing:0.5px;max-width:280px;animation:toastIn 0.35s ease;box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+.toast-item.warn{border-left-color:var(--amber)}
+.toast-item.crit{border-left-color:var(--red)}
+.toast-title{font-weight:700;color:var(--text);margin-bottom:2px}
+.toast-body{color:var(--text2);font-size:10px}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}
+
+/* entry animations */
+@keyframes dashIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.hero-card{animation:dashIn 0.5s ease 0.1s both}
+.env-card{animation:dashIn 0.5s ease 0.2s both}
+.rules-card{animation:dashIn 0.5s ease 0.25s both}
+</style>
+</head>
+<body>
+
+<!-- ════════════ TOAST CONTAINER ════════════ -->
+<div id="toast"></div>
+
+<!-- ════════════ SPLASH ════════════ -->
+<div class="screen" id="splashScreen">
+  <div class="splash-wrap">
+    <div class="hex-logo">
+      <svg viewBox="0 0 140 162" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Outer hex -->
+        <polygon points="70,4 134,39 134,123 70,158 6,123 6,39" fill="#070d18" stroke="#17304f" stroke-width="1.5"/>
+        <polygon points="70,13 126,45 126,117 70,149 14,117 14,45" fill="none" stroke="#0e1e35" stroke-width="0.7"/>
+        <!-- Boot glow ring -->
+        <polygon points="70,22 118,49 118,113 70,140 22,113 22,49" fill="none" stroke="#1470d4" stroke-width="1.5" opacity="0">
+          <animate attributeName="opacity" values="0;1;0.5;1;0" dur="2.5s" begin="0.5s"/>
+          <animate attributeName="stroke-width" values="1.5;5;1.5;5;1.5" dur="2.5s" begin="0.5s"/>
+        </polygon>
+        <!-- Helmet -->
+        <rect x="56" y="46" width="28" height="15" rx="7.5" fill="#1470d4"/>
+        <rect x="51" y="58" width="38" height="5" rx="1.5" fill="#1e90ff"/>
+        <!-- Face visor -->
+        <rect x="58" y="64" width="24" height="9" rx="2" fill="#070d18" stroke="#0e1e35" stroke-width="0.6"/>
+        <line x1="58" y1="68" x2="82" y2="68" stroke="#17304f" stroke-width="0.5"/>
+        <!-- Body / HV vest -->
+        <rect x="56" y="75" width="28" height="28" rx="3" fill="#0b1220" stroke="#0e1e35" stroke-width="1"/>
+        <!-- Hi-viz stripe animated -->
+        <rect x="56" y="85" width="28" height="5" fill="rgba(255,184,0,0)" stroke="none" opacity="0">
+          <animate attributeName="opacity" values="0;0;1;1" dur="2s" begin="0.9s" fill="freeze"/>
+          <animate attributeName="fill" values="rgba(255,184,0,0);rgba(255,184,0,0.18);rgba(255,184,0,0.18)" dur="2s" begin="0.9s" fill="freeze"/>
+        </rect>
+        <rect x="56" y="85" width="28" height="1.5" fill="var(--amber2)" opacity="0">
+          <animate attributeName="opacity" values="0;0;0.7;0.7" dur="2s" begin="0.9s" fill="freeze"/>
+        </rect>
+        <rect x="56" y="89" width="28" height="1.5" fill="var(--amber2)" opacity="0">
+          <animate attributeName="opacity" values="0;0;0.7;0.7" dur="2s" begin="0.9s" fill="freeze"/>
+        </rect>
+        <!-- Left arm -->
+        <rect x="47" y="77" width="9" height="20" rx="4" fill="#0b1220" stroke="#0e1e35" stroke-width="1"/>
+        <!-- Right arm + wrench -->
+        <rect x="84" y="77" width="9" height="20" rx="4" fill="#0b1220" stroke="#0e1e35" stroke-width="1"/>
+        <rect x="93" y="74" width="4" height="26" rx="2" fill="#1470d4"/>
+        <rect x="91" y="74" width="8" height="5" rx="2" fill="#1e90ff"/>
+        <!-- Legs -->
+        <rect x="58" y="103" width="10" height="18" rx="3" fill="#070d18" stroke="#0e1e35" stroke-width="1"/>
+        <rect x="72" y="103" width="10" height="18" rx="3" fill="#070d18" stroke="#0e1e35" stroke-width="1"/>
+        <!-- Heartbeat pulse in chest (animated) -->
+        <polyline points="59,82 62,82 64.5,76 67,87 70,79 73,82 84,82" fill="none" stroke="#1e90ff" stroke-width="1.6" opacity="0">
+          <animate attributeName="opacity" values="0;0;1;1;1;0.4;1;1;0" dur="3s" begin="1.1s" fill="freeze"/>
+        </polyline>
+        <!-- Corner circuits -->
+        <line x1="6" y1="62" x2="20" y2="62" stroke="#0e1e35" stroke-width="0.8"/><line x1="20" y1="62" x2="20" y2="76" stroke="#0e1e35" stroke-width="0.8"/>
+        <line x1="134" y1="62" x2="120" y2="62" stroke="#0e1e35" stroke-width="0.8"/><line x1="120" y1="62" x2="120" y2="76" stroke="#0e1e35" stroke-width="0.8"/>
+        <line x1="6" y1="98" x2="20" y2="98" stroke="#0e1e35" stroke-width="0.8"/>
+        <line x1="134" y1="98" x2="120" y2="98" stroke="#0e1e35" stroke-width="0.8"/>
+        <!-- Scan line animation (sweeping blue line) -->
+        <line x1="6" y1="40" x2="134" y2="40" stroke="#1e90ff" stroke-width="1" opacity="0">
+          <animate attributeName="opacity" values="0;0.4;0" dur="0.6s" begin="0.3s"/>
+          <animate attributeName="y1" values="40;122" dur="0.6s" begin="0.3s"/>
+          <animate attributeName="y2" values="40;122" dur="0.6s" begin="0.3s"/>
+        </line>
+      </svg>
+    </div>
+    <div class="splash-title">SafeWorker</div>
+    <div class="splash-tag">Industrial Safety OS &nbsp;·&nbsp; v2.1</div>
+    <div class="boot-wrap">
+      <div class="boot-hdr"><span>System Initializing</span><span id="bootPct">0%</span></div>
+      <div class="boot-track"><div class="boot-fill" id="bootFill"></div></div>
+      <div class="boot-log" id="bootLog"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ LOGIN ════════════ -->
+<div class="screen hidden" id="loginScreen">
+  <div class="login-card">
+    <div class="login-head">
+      <svg class="login-icon" viewBox="0 0 46 54" fill="none">
+        <polygon points="23,2 44,13 44,41 23,52 2,41 2,13" fill="#070d18" stroke="#17304f" stroke-width="1.2"/>
+        <rect x="17" y="16" width="12" height="7" rx="3.5" fill="#1470d4"/>
+        <rect x="14" y="21" width="18" height="3" rx="1" fill="#1e90ff"/>
+        <rect x="18" y="26" width="10" height="11" rx="2" fill="#0b1220" stroke="#0e1e35" stroke-width="0.8"/>
+        <polyline points="19.5,31 21,31 22,28.5 23.2,33.5 24.5,29.5 25.5,31 27.5,31" fill="none" stroke="#1e90ff" stroke-width="1.1"/>
+        <rect x="19" y="37" width="3.5" height="6" rx="1.2" fill="#070d18" stroke="#0e1e35" stroke-width="0.7"/>
+        <rect x="24" y="37" width="3.5" height="6" rx="1.2" fill="#070d18" stroke="#0e1e35" stroke-width="0.7"/>
+      </svg>
+      <div>
+        <div class="lh-t1">Worker Auth</div>
+        <div class="lh-t2">Industrial Safety System</div>
+      </div>
+    </div>
+    <div class="login-body">
+      <div><div class="fl">Worker ID</div><input class="fi" id="loginId" type="text" placeholder="IND_110" autocomplete="off" spellcheck="false"/></div>
+      <div><div class="fl">Worker Name</div><input class="fi" id="loginName" type="text" placeholder="RAM" autocomplete="off"/></div>
+      <div class="login-err" id="loginErr"></div>
+      <button class="login-btn" id="loginBtn">Access System</button>
+      <div class="login-hint">Worker ID: IND_110 &nbsp;·&nbsp; Name: RAM &nbsp;·&nbsp; Session persists after first login</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ DASHBOARD ════════════ -->
+<div id="dashScreen" class="hidden">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-brand">
+      <svg class="tb-hex" viewBox="0 0 34 40" fill="none">
+        <polygon points="17,1 33,10 33,30 17,39 1,30 1,10" fill="#070d18" stroke="#17304f" stroke-width="1"/>
+        <rect x="11" y="11" width="12" height="7" rx="3.5" fill="#1470d4"/>
+        <rect x="9" y="16" width="16" height="2.5" rx="0.8" fill="#1e90ff"/>
+        <rect x="12" y="20" width="10" height="9" rx="1.5" fill="#070d18" stroke="#0e1e35" stroke-width="0.5"/>
+        <polyline points="13,24.5 14.5,24.5 15.5,22 17,27 18,23.5 19,24.5 21,24.5" fill="none" stroke="#1e90ff" stroke-width="0.9"/>
+        <rect x="12.5" y="29" width="3.5" height="5.5" rx="1" fill="#04080f" stroke="#0e1e35" stroke-width="0.5"/>
+        <rect x="17" y="29" width="3.5" height="5.5" rx="1" fill="#04080f" stroke="#0e1e35" stroke-width="0.5"/>
+      </svg>
+      <div><div class="n1">SAFEWORKER</div><div class="n2">INDUSTRIAL OS</div></div>
+    </div>
+    <div class="tb-gap"></div>
+    <div class="tp" id="netPill"><div class="dot"></div><span>NET</span><b id="netStatus">—</b></div>
+    <div class="tp" style="border-color:rgba(255,184,0,0.25)"><div class="dot" style="background:var(--amber);box-shadow:0 0 5px var(--amber)"></div><span>MODE</span><b id="appMode">WEB</b></div>
+    <div class="tp"><div class="dot" style="background:var(--cyan);box-shadow:0 0 5px var(--cyan)"></div><span>SYNC</span><b id="updatedAgo">—</b></div>
+    <div class="tp" id="haciScorePill" style="border-color:rgba(30,144,255,0.3)"><div class="dot" style="background:var(--blue);box-shadow:0 0 5px var(--blue)"></div><span>HACI</span><b id="haciTopbar">--</b></div>
+    <div class="tb-worker">
+      <div class="tb-av" id="tbAv">R</div>
+      <div><div class="tb-wn" id="tbName">Ram</div><div class="tb-wi" id="tbId">IND-110</div></div>
+    </div>
+    <button class="tb-btn" id="btnNotify">🔔 Alerts</button>
+    <div class="tb-logout" id="btnLogout">⏻ Exit</div>
+  </div>
+
+  <!-- HACI ALERT BANNER -->
+  <div id="haciAlert"></div>
+
+  <!-- BODY -->
+  <div class="dash-body">
+
+    <!-- ═══ HERO CARD ═══ -->
+    <div class="hero-card">
+      <!-- Left: Ring + HACI detail -->
+      <div class="hero-left">
+        <div class="rc">
+          <svg viewBox="0 0 124 124">
+            <circle class="rc-bg" cx="62" cy="62" r="54"/>
+            <!-- Threshold markers -->
+            <circle cx="62" cy="62" r="54" fill="none" stroke="rgba(255,184,0,0.2)" stroke-width="1" stroke-dasharray="2 4" stroke-dashoffset="0"/>
+            <circle class="rc-ring" id="rcRing" cx="62" cy="62" r="54"/>
+          </svg>
+          <div class="rc-inner">
+            <div class="rc-val" id="haci">--</div>
+            <div class="rc-lbl">HACI</div>
+            <div class="rc-sub">Health Index</div>
+          </div>
+        </div>
+
+        <!-- Delta indicator -->
+        <div class="haci-delta" id="haciDelta">
+          <span class="delta-eq">— </span><span style="font-size:9px">vs last</span>
+        </div>
+
+        <!-- Status pill -->
+        <div class="status-pill" id="statusPill">Loading…</div>
+
+        <!-- HACI zone bar -->
+        <div class="haci-zone">
+          <div class="haci-zone-lbl">HEALTH ZONE</div>
+          <div class="haci-zone-bar">
+            <div class="haci-zone-fill" id="haciZoneFill" style="width:0%;background:var(--blue)"></div>
+          </div>
+          <div class="haci-markers"><span>CRIT</span><span>WARN</span><span>MOD</span><span>SAFE</span></div>
+          <div class="haci-band-tag" id="haciZoneTag" style="color:var(--blue)">—</div>
+        </div>
+
+        <div class="sync-txt">
+          Sync: <b id="lastSync">—</b><br>
+          Updated: <b id="updAgo2">—</b><br>
+          Alerts: <b id="alertsCount" style="color:var(--amber)">0</b> this shift
+        </div>
+      </div>
+
+      <!-- Right: data -->
+      <div class="hero-right">
+        <!-- Profile chips -->
+        <div class="chips-row">
+          <div class="sc ok"><div class="led"></div>WORKER:<b id="wName">—</b></div>
+          <div class="sc ok"><div class="led"></div>ID:<b id="wId">—</b></div>
+          <div class="sc ok"><div class="led"></div>SITE:<b id="wSite">—</b></div>
+          <div class="sc ok"><div class="led"></div>SHIFT:<b id="wShift">—</b></div>
+          <div class="sc ok"><div class="led" style="background:var(--sky);box-shadow:0 0 5px var(--sky)"></div>TIME:<b id="curTime">—</b></div>
+        </div>
+
+        <!-- Status chips -->
+        <div class="chips-row">
+          <div class="sc" id="presChip"><div class="led"></div>PRESENCE:<b id="presence">—</b></div>
+          <div class="sc" id="anomChip"><div class="led"></div>ANOMALY:<b id="anom">—</b></div>
+          <div class="sc" id="fallChip"><div class="led"></div>FALL DETECT:<b id="fall">—</b></div>
+          <div class="sc" id="haciChip"><div class="led"></div>HACI STATUS:<b id="haciStatus">—</b></div>
+        </div>
+
+        <!-- KPI tiles -->
+        <div class="kpi-row">
+          <div class="kpi" id="hrT">
+            <div class="k-thresh ok" id="hrTh">NORMAL</div>
+            <div class="k-lbl">♥ Heart Rate</div>
+            <div class="k-val"><span id="hr">--</span><span class="k-unit">bpm</span></div>
+            <div class="k-note" id="hrN">—</div>
+          </div>
+          <div class="kpi" id="s2T">
+            <div class="k-thresh ok" id="s2Th">NORMAL</div>
+            <div class="k-lbl">◎ SpO₂</div>
+            <div class="k-val"><span id="spo2">--</span><span class="k-unit">%</span></div>
+            <div class="k-note" id="s2N">—</div>
+          </div>
+          <div class="kpi" id="tpT">
+            <div class="k-thresh ok" id="tpTh">NORMAL</div>
+            <div class="k-lbl">◈ Body Temp</div>
+            <div class="k-val"><span id="temp">--</span><span class="k-unit">°C</span></div>
+            <div class="k-note" id="tpN">—</div>
+          </div>
+          <div class="kpi" id="acT">
+            <div class="k-thresh ok" id="acTh">STABLE</div>
+            <div class="k-lbl">↑ Accel</div>
+            <div class="k-val"><span id="accel">--</span><span class="k-unit">g</span></div>
+            <div class="k-note" id="acN">—</div>
+          </div>
+        </div>
+
+        <!-- Alert panel -->
+        <div class="alert-wrap">
+          <div class="alert-top" id="aTop">
+            <div class="a-icon" id="aIcon">✓</div>
+            <div class="a-title" id="aTitle">Evaluating…</div>
+            <span class="a-badge ok" id="aBadge">SAFE</span>
+          </div>
+          <div class="a-detail" id="aDetail">Micro-break guidance will appear here.</div>
+          <div id="mbSec">
+            <div class="mb-clock" id="mbTime">05:00</div>
+            <div class="mb-prog"><div class="mb-prog-fill" id="mbProgFill" style="width:100%"></div></div>
+            <div class="mb-btns">
+              <button class="mb-btn pri" id="mbStart">▶ Start</button>
+              <button class="mb-btn" id="mbStop">■ Pause</button>
+              <button class="mb-btn" id="mbReset">↺ Reset</button>
+            </div>
+            <div class="mb-note" id="mbNote">Take rest. Press Start to begin countdown.</div>
+          </div>
+        </div>
+
+        <!-- Shift Summary -->
+        <div class="shift-bar">
+          <div class="shift-cell"><div class="sv" id="ssAvgHACI">--</div><div class="sl2">AVG HACI</div></div>
+          <div class="shift-cell"><div class="sv" id="ssBreaks">0</div><div class="sl2">BREAKS TAKEN</div></div>
+          <div class="shift-cell"><div class="sv" id="ssAlerts">0</div><div class="sl2">ALERTS TODAY</div></div>
+          <div class="shift-cell"><div class="sv" id="ssShiftTime">--:--</div><div class="sl2">SHIFT TIME</div></div>
+        </div>
+      </div>
+    </div><!-- /hero-card -->
+
+    <!-- ═══ ENV CARD ═══ -->
+    <div class="env-card">
+      <div class="card-head">
+        <div class="sl" style="border:none;margin:0;padding:0">Zone Conditions</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3)" id="envUpdated">—</div>
+      </div>
+      <div class="env-grid">
+        <div class="env-tile" id="eTmpT"><div class="e-lbl">Site Temp</div><div class="e-val"><span id="envTemp">--</span><span class="e-unit">°C</span></div><div class="e-sub" id="envTempS">Field 1</div><div class="e-bar"><div class="e-bar-fill" id="eTmpBar" style="width:0%"></div></div></div>
+        <div class="env-tile" id="eHumT"><div class="e-lbl">Humidity</div><div class="e-val"><span id="envHum">--</span><span class="e-unit">%</span></div><div class="e-sub" id="envHumS">Field 2</div><div class="e-bar"><div class="e-bar-fill" id="eHumBar" style="width:0%"></div></div></div>
+        <div class="env-tile" id="eSndT"><div class="e-lbl">Sound Level</div><div class="e-val"><span id="envSound">--</span></div><div class="e-sub" id="envSndS">Field 3</div><div class="e-bar"><div class="e-bar-fill" id="eSndBar" style="width:0%"></div></div></div>
+        <div class="env-tile" id="eAirT"><div class="e-lbl">Air Quality</div><div class="e-val"><span id="envAir">--</span></div><div class="e-sub" id="envAirS">Field 4</div><div class="e-bar"><div class="e-bar-fill" id="eAirBar" style="width:0%"></div></div></div>
+        <div class="env-tile" id="eDstT"><div class="e-lbl">Dust Level</div><div class="e-val"><span id="envDust">--</span></div><div class="e-sub" id="envDstS">Field 5</div><div class="e-bar"><div class="e-bar-fill" id="eDstBar" style="width:0%"></div></div></div>
+        <div class="env-tile" id="eFlmT"><div class="e-lbl">Flame Sensor</div><div class="e-val" id="envFlame">--</div><div class="e-sub" id="envFlmS">Field 6 · Detector</div><div class="e-bar"><div class="e-bar-fill" id="eFlmBar" style="width:0%"></div></div></div>
+      </div>
+      <div class="env-foot" id="envNote">Fetching zone sensor data…</div>
+    </div>
+
+    <!-- ═══ RULES / TIPS CARD ═══ -->
+    <div class="rules-card">
+      <div class="tip-bar"><span class="tip-tag">TIP</span><span class="tip-txt" id="tipText">Initializing…</span></div>
+
+      <!-- HACI Guide -->
+      <div style="padding:9px 10px 4px"><div class="sl">HACI Score Guide</div></div>
+      <div style="padding:0 10px 8px;display:flex;flex-direction:column;gap:4px">
+        <div class="r-row"><span class="r-n" style="color:var(--blue)">80+</span><span class="r-t">SAFE — Vitals excellent, full work capacity</span></div>
+        <div class="r-row"><span class="r-n" style="color:var(--sky)">60–79</span><span class="r-t">MODERATE — Monitor closely, consider a break soon</span></div>
+        <div class="r-row"><span class="r-n" style="color:var(--amber)">40–59</span><span class="r-t">WARNING — Micro-break required now</span></div>
+        <div class="r-row"><span class="r-n" style="color:var(--red)">0–39</span><span class="r-t">CRITICAL — Stop work, rest, call supervisor</span></div>
+      </div>
+
+      <div style="padding:0 10px 4px"><div class="sl">Alert Rules</div></div>
+      <div style="padding:0 10px 8px;display:flex;flex-direction:column;gap:4px">
+        <div class="r-row"><span class="r-n" style="color:var(--red)">!</span><span class="r-t">Fall detected → Emergency — call supervisor</span></div>
+        <div class="r-row"><span class="r-n" style="color:var(--red)">!</span><span class="r-t">SpO₂ &lt; 92% → Safe zone + rest 3–5 min</span></div>
+        <div class="r-row"><span class="r-n" style="color:var(--amber)">!</span><span class="r-t">Body temp &gt; 38°C → Heat stress + hydrate</span></div>
+        <div class="r-row"><span class="r-n" style="color:var(--amber)">!</span><span class="r-t">HACI &lt; 60 → Take micro-break immediately</span></div>
+        <div class="r-row"><span class="r-n" style="color:var(--violet)">!</span><span class="r-t">HACI drop &gt;10 pts → Auto-notification sent</span></div>
+      </div>
+
+      <div style="padding:0 10px 4px"><div class="sl">Safety Tips</div></div>
+      <div style="padding:0 10px 8px;display:flex;flex-direction:column;gap:4px">
+        <div class="r-row"><span class="r-n">01</span><span class="r-t">Hydrate: small sips every 20–30 min in heat</span></div>
+        <div class="r-row"><span class="r-n">02</span><span class="r-t">Breathing: 4s in → 2s hold → 6s out, 5 times</span></div>
+        <div class="r-row"><span class="r-n">03</span><span class="r-t">Eye relief: look 20 feet away for 20 seconds</span></div>
+        <div class="r-row"><span class="r-n">04</span><span class="r-t">Posture reset: shoulders, jaw, grip every 30 min</span></div>
+        <div class="r-row"><span class="r-n">05</span><span class="r-t">After fall: stay still — don't walk it off</span></div>
+      </div>
+
+      <div class="routine-blk">
+        <div class="routine-hd">3-Min Break Routine</div>
+        <div class="routine-body">
+          <div class="rs"><span class="rs-t">0:30</span>Slow deep breathing</div>
+          <div class="rs"><span class="rs-t">1:00</span>Neck + shoulder roll</div>
+          <div class="rs"><span class="rs-t">1:00</span>Wrist + ankle rotations</div>
+          <div class="rs"><span class="rs-t">0:30</span>Water + final breath</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /dash-body -->
+</div><!-- /dashScreen -->
+
+<script>
+/* ════════════════════════════════════
+   BOOT
+════════════════════════════════════ */
+const BOOT=[
+  {t:"Initializing hardware drivers",d:400},
+  {t:"Loading sensor calibration",d:500},
+  {t:"Connecting safety protocols",d:450},
+  {t:"Verifying ThingSpeak API keys",d:380},
+  {t:"Auth module online",d:300},
+];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function runBoot(){
+  const fill=document.getElementById('bootFill');
+  const pctEl=document.getElementById('bootPct');
+  const log=document.getElementById('bootLog');
+  let total=0,cum=0;BOOT.forEach(s=>total+=s.d);
+  for(let i=0;i<BOOT.length;i++){
+    const s=BOOT[i];
+    const row=document.createElement('div');row.className='boot-row';
+    row.innerHTML=`<span class="b-ld">▸</span><span>${s.t}…</span>`;
+    log.appendChild(row);await sleep(s.d);cum+=s.d;
+    const pct=Math.round((cum/total)*100);
+    fill.style.width=pct+'%';pctEl.innerText=pct+'%';
+    row.querySelector('.b-ld').className='b-ok';row.querySelector('.b-ok').innerText='✓';
+  }
+  await sleep(300);go('splashScreen','loginScreen');
+}
+
+function go(from,to){
+  document.getElementById(from).classList.add('hidden');
+  const el=document.getElementById(to);el.classList.remove('hidden');
+}
+
+/* ════════════════════════════════════
+   LOGIN
+════════════════════════════════════ */
+const VALID_ID='ind_110',VALID_NAME='ram',SK='sw_auth_v2';
+document.getElementById('loginBtn').onclick=doLogin;
+['loginId','loginName'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();}));
+
+function doLogin(){
+  const id=document.getElementById('loginId').value.trim().toLowerCase();
+  const nm=document.getElementById('loginName').value.trim().toLowerCase();
+  const err=document.getElementById('loginErr');
+  ['loginId','loginName'].forEach(x=>document.getElementById(x).classList.remove('err'));
+  err.innerText='';
+  if(!id||!nm){err.innerText='Both fields are required.';return;}
+  if(id!==VALID_ID||nm!==VALID_NAME){
+    err.innerText='Invalid credentials — access denied.';
+    err.style.animation='none';requestAnimationFrame(()=>err.style.animation='');
+    ['loginId','loginName'].forEach(x=>document.getElementById(x).classList.add('err'));
+    return;
+  }
+  localStorage.setItem(SK,'1');go('loginScreen','dashScreen');
+  document.getElementById('dashScreen').classList.remove('hidden');
+  initDash();
+}
+
+document.getElementById('btnLogout').onclick=()=>{
+  if(confirm('Log out from SafeWorker?')){localStorage.removeItem(SK);location.reload();}
+};
+
+window.addEventListener('DOMContentLoaded',async()=>{
+  await runBoot();await sleep(180);
+  if(localStorage.getItem(SK)==='1'){
+    go('loginScreen','dashScreen');
+    document.getElementById('dashScreen').classList.remove('hidden');
+    initDash();
+  }
+});
+
+/* ════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════ */
+const WCH="2436533",WK="IEHPXGUC6U1K4NJX";
+const ECH="2451818",EK="AP36OTQMUVKAHQGA";
+const REFRESH=8000;
+const $=id=>document.getElementById(id);
+const now=()=>Date.now();
+
+// State
+let lastUp=0, lastNotifKey='', lastBrk=false;
+let mbIv=null, mbTotal=300, mbRem=300, mbRun=false;
+let prevHACI=null, lastHACI=null;
+let shiftStart=null, shiftAlerts=0, shiftBreaks=0, haciSum=0, haciCount=0;
+let notifEnabled=false;
+let shiftAlertCountTotal=0;
+
+function initDash(){
+  $('wName').innerText='Ram';$('wId').innerText='IND-110';$('wSite').innerText='Construction';$('wShift').innerText='Morning';
+  $('tbName').innerText='Ram';$('tbId').innerText='IND-110';$('tbAv').innerText='R';
+  shiftStart=now();
+  detectMode();updateNet();
+  window.addEventListener('online',updateNet);window.addEventListener('offline',updateNet);
+  setInterval(renderAgo,1000);setInterval(updateClock,1000);updateClock();
+  rotateTip();setInterval(rotateTip,15000);
+  initMb();
+  $('btnNotify').onclick=()=>enableNotif().catch(()=>{});
+  tick();setInterval(tick,REFRESH);
+}
+
+function detectMode(){
+  const pwa=window.matchMedia?.('(display-mode: standalone)')?.matches||navigator.standalone===true;
+  $('appMode').innerText=pwa?'PWA':'WEB';
+}
+function updateNet(){
+  const on=navigator.onLine;$('netStatus').innerText=on?'ONLINE':'OFFLINE';
+  const d=document.querySelector('#netPill .dot');
+  if(d){d.style.background=on?'var(--blue)':'var(--red)';d.style.boxShadow=on?'0 0 5px var(--blue)':'0 0 5px var(--red)';}
+}
+function renderAgo(){
+  if(!lastUp){$('updatedAgo').innerText='—';$('updAgo2').innerText='—';return;}
+  const s=Math.max(0,Math.floor((now()-lastUp)/1000));
+  const t=s<60?`${s}s ago`:`${Math.floor(s/60)}m ago`;
+  $('updatedAgo').innerText=t;$('updAgo2').innerText=t;
+  // Shift time
+  if(shiftStart){
+    const sm=Math.floor((now()-shiftStart)/60000);
+    const sh=Math.floor(sm/60),smin=sm%60;
+    $('ssShiftTime').innerText=`${String(sh).padStart(2,'0')}:${String(smin).padStart(2,'0')}`;
+  }
+}
+function updateClock(){
+  $('curTime').innerText=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+}
+
+const TIPS=["Safety isn't extra work. It's how work gets done.","Take the break now — avoid the accident later.","Hydrate: small sips every 20–30 minutes.","Breathing reset: 4s in · 2s hold · 6s out × 5.","Micro-breaks reduce fatigue and mistakes.","Stop early. Recover fast. Perform better.","Work smart. Work safe. Go home well.","Low HACI = your body asking for rest. Listen to it.","Check your SpO₂ — if below 95%, slow down and breathe."];
+let tipI=0;function rotateTip(){$('tipText').innerText=TIPS[tipI++%TIPS.length];}
+
+/* ── RING ── */
+function setRing(v,c){
+  const circ=339;const off=circ*(1-Math.max(0,Math.min(100,v))/100);
+  const r=$('rcRing');r.style.strokeDashoffset=off;r.style.stroke=c;
+  // pulse if critical
+  r.classList.toggle('pulse',v<40&&v>0);
+}
+
+/* ── KPI tile ── */
+function setTile(id,pct,c){const t=$(id);if(!t)return;t.style.setProperty('--kc',c);t.style.setProperty('--kw',Math.min(100,Math.max(0,pct))+'%');}
+function setThresh(id,txt,cls){const t=$(id);if(!t)return;t.innerText=txt;t.className=`k-thresh ${cls}`;}
+
+/* ── ENV tile ── */
+function setEnvTile(tileId,barId,subId,color,barPct,subTxt){
+  const t=$(tileId);if(t)t.style.setProperty('--ec',color);
+  const b=$(barId);if(b){b.style.width=Math.min(100,Math.max(0,barPct))+'%';b.style.background=color;b.style.boxShadow=`0 0 5px ${color}`;}
+  const s=$(subId);if(s){s.innerText=subTxt;s.style.color=color==='var(--red)'?'var(--red)':color==='var(--amber)'?'var(--amber)':'var(--text3)';}
+}
+
+/* ── MICRO-BREAK ── */
+function pad2(n){return String(n).padStart(2,'0');}
+function renderMb(){
+  const m=Math.floor(mbRem/60),s=mbRem%60;$('mbTime').innerText=`${pad2(m)}:${pad2(s)}`;
+  const pct=(mbRem/mbTotal)*100;$('mbProgFill').style.width=pct+'%';
+}
+function showMb(v){$('mbSec').style.display=v?'block':'none';}
+function stopMb(){if(mbIv)clearInterval(mbIv);mbIv=null;mbRun=false;}
+function resetMb(min=5){stopMb();mbTotal=Math.max(1,Math.round(min*60));mbRem=mbTotal;renderMb();}
+function startMb(){
+  if(mbRun)return;mbRun=true;
+  shiftBreaks++;$('ssBreaks').innerText=shiftBreaks;
+  if(mbIv)clearInterval(mbIv);
+  mbIv=setInterval(()=>{
+    mbRem=Math.max(0,mbRem-1);renderMb();
+    if(mbRem===0){stopMb();$('mbNote').innerText='✓ Break complete. Resume when stable.';
+    notifySafe('✓ Break Complete','You may now resume work. Stay hydrated.','ok').catch(()=>{});}
+  },1000);
+}
+function initMb(){
+  $('mbStart').onclick=()=>{$('mbNote').innerText='Timer running — rest now.';startMb();};
+  $('mbStop').onclick=()=>stopMb();
+  $('mbReset').onclick=()=>{$('mbNote').innerText='Take rest. Press Start.';resetMb(5);};
+  renderMb();
+}
+
+/* ── NOTIFICATIONS ── */
+async function enableNotif(){
+  if(!('Notification'in window)){showToast('Notice','Notifications not supported in this browser.','warn');return;}
+  const p=await Notification.requestPermission();
+  notifEnabled=p==='granted';
+  const btn=$('btnNotify');
+  if(notifEnabled){btn.innerText='🔔 Alerts On';btn.classList.add('notif-on');showToast('Alerts Active','You will receive safety alerts for HACI drops and emergencies.','ok');}
+  else{btn.innerText='🔕 Blocked';showToast('Blocked','Please allow notifications in your browser settings.','warn');}
+}
+
+async function notifySafe(title,body,type='ok'){
+  // In-app toast always
+  showToast(title,body,type);
+  try{
+    if(!('Notification'in window)||Notification.permission!=='granted')return;
+    if('serviceWorker'in navigator){
+      const reg=await navigator.serviceWorker.ready;
+      if(reg?.showNotification){await reg.showNotification(title,{body,icon:'icon-192.png',tag:'sw-'+type,renotify:true,vibrate:[200,100,200]});return;}
+    }
+    new Notification(title,{body,icon:'icon-192.png'});
+  }catch(e){console.warn(e);}
+}
+
+/* ── IN-APP TOAST ── */
+function showToast(title,body,type='ok'){
+  const container=$('toast');
+  const item=document.createElement('div');
+  item.className=`toast-item ${type}`;
+  item.innerHTML=`<div class="toast-title">${title}</div><div class="toast-body">${body}</div>`;
+  container.appendChild(item);
+  setTimeout(()=>{item.style.animation='toastOut 0.35s ease forwards';setTimeout(()=>item.remove(),350);},4500);
+}
+
+/* ── HACI ALERT BANNER ── */
+function updateHACIBanner(haci){
+  const el=$('haciAlert');
+  if(haci===null||haci===undefined){el.style.display='none';return;}
+  if(haci<40){
+    el.style.display='block';el.className='';el.classList.add('crit');
+    el.innerText=`⚠ CRITICAL HACI: ${haci} — STOP WORK. Move to safe zone. Inform supervisor immediately.`;
+  } else if(haci<60){
+    el.style.display='block';el.className='';
+    el.innerText=`⚠ LOW HACI: ${haci} — Micro-break required. Rest now and hydrate.`;
+  } else if(haci<70){
+    el.style.display='block';el.className='';
+    el.innerText=`↓ HACI ${haci} — Moderate range. Monitor closely. Consider a break soon.`;
+    el.style.background='rgba(56,189,248,0.07)';el.style.color='var(--sky)';el.style.borderColor='rgba(56,189,248,0.2)';el.style.animation='none';
+  } else{
+    el.style.display='none';
+  }
+}
+
+/* ── DELTA HACI ── */
+function updateDelta(current){
+  const el=$('haciDelta');
+  if(prevHACI===null||prevHACI===undefined){el.innerHTML=`<span class="delta-eq">— </span><span style="font-size:9px">vs last</span>`;return;}
+  const diff=current-prevHACI;
+  if(diff>0)el.innerHTML=`<span class="delta-up">▲ +${diff}</span><span style="font-size:9px"> vs last</span>`;
+  else if(diff<0)el.innerHTML=`<span class="delta-dn">▼ ${diff}</span><span style="font-size:9px"> vs last</span>`;
+  else el.innerHTML=`<span class="delta-eq">— ${diff}</span><span style="font-size:9px"> vs last</span>`;
+}
+
+/* ── NOTES ── */
+function noteHR(v){if(v===null)return'Sensor offline';if(v>=60&&v<=100)return'Normal range';if(v<=120)return'Elevated — monitor closely';return'High — possible strain';}
+function noteSpo2(v){if(v===null)return'Sensor offline';if(v>=95)return'Good oxygenation';if(v>=92)return'Slightly low — watch';return'Low — move to safe zone!';}
+function noteTemp(v){if(v===null)return'Sensor offline';if(v<=37.5)return'Normal body temp';if(v<=38)return'Warm — hydrate now';return'High — heat stress risk!';}
+function noteAccel(v){if(v===null)return'No reading';if(v>=0.9&&v<=1.1)return'Stable posture';if(v<=1.35)return'Light activity';if(v<=1.8)return'Moderate activity';return'High impact detected';}
+
+function haciColor(h){if(h>=80)return'var(--blue)';if(h>=60)return'var(--sky)';if(h>=40)return'var(--amber)';return'var(--red)';}
+function haciBand(h){if(h>=80)return{lbl:'SAFE',c:'var(--blue)',cls:'ok'};if(h>=60)return{lbl:'MODERATE',c:'var(--sky)',cls:'ok'};if(h>=40)return{lbl:'WARNING',c:'var(--amber)',cls:'warn'};return{lbl:'CRITICAL',c:'var(--red)',cls:'crit'};}
+
+function computeHACI({hrOk,spo2Ok,tempOk,accel,fall,anomaly}){
+  let s=0;
+  s+=spo2Ok===null?24:spo2Ok>=95?35:spo2Ok>=92?28:spo2Ok>=88?20:12;
+  s+=hrOk===null?18:(hrOk>=60&&hrOk<=100)?25:hrOk<=120?18:12;
+  s+=tempOk===null?14:tempOk<=37.5?20:tempOk<=38?14:10;
+  s+=fall===1?0:(accel!==null&&accel>=0.9&&accel<=1.1)?20:(accel!==null&&accel<=1.35)?16:(accel!==null&&accel<=1.8)?12:8;
+  if(anomaly==='YES')s-=8;if(fall===1)s-=25;
+  return Math.max(0,Math.min(100,Math.round(s)));
+}
+
+function decideAction({haci,fall,spo2Ok,tempOk,anomaly}){
+  if(fall===1)return{t:'EMERGENCY: Fall Detected',d:'Stay still. Call supervisor immediately. Do NOT attempt to move.',b:'EMERGENCY',bc:'crit',icon:'⚠',hBg:'rgba(255,61,61,0.13)',iBg:'rgba(255,61,61,0.22)',notify:{title:'🚨 EMERGENCY',body:'Fall detected! Call supervisor.',type:'crit'}};
+  if(spo2Ok!==null&&spo2Ok<92)return{t:'ALERT: Low SpO₂',d:'Move to safe zone immediately. Take deep breaths for 3–5 minutes. Inform supervisor.',b:'ALERT',bc:'crit',icon:'!',hBg:'rgba(255,61,61,0.10)',iBg:'rgba(255,61,61,0.18)',notify:{title:'⚠ Low SpO₂',body:'SpO₂ critically low. Move to safe zone now.',type:'crit'}};
+  if(tempOk!==null&&tempOk>38)return{t:'ALERT: Heat Stress Risk',d:'Rest 3–5 min immediately. Drink water. Inform supervisor if dizziness persists.',b:'ALERT',bc:'crit',icon:'!',hBg:'rgba(255,100,53,0.10)',iBg:'rgba(255,100,53,0.18)',notify:{title:'⚠ Heat Stress',body:'Body temp elevated. Rest and hydrate now.',type:'crit'}};
+  if(haci<40)return{t:'CRITICAL: Very Low HACI',d:'STOP WORK. Your health index is critically low. Rest immediately and inform supervisor.',b:'CRITICAL',bc:'crit',icon:'⚠',hBg:'rgba(255,61,61,0.13)',iBg:'rgba(255,61,61,0.22)',notify:{title:'🚨 CRITICAL HACI',body:`HACI is ${haci}. Stop work and rest immediately.`,type:'crit'}};
+  if(haci<60||(anomaly==='YES'&&haci<75))return{t:'Micro-break Recommended',d:'Your HACI score indicates fatigue. Take 3–5 min rest, drink water, then resume.',b:'BREAK',bc:'warn',icon:'⏱',hBg:'rgba(255,184,0,0.10)',iBg:'rgba(255,184,0,0.18)',notify:{title:'⚠ Low HACI — Rest Needed',body:`HACI is ${haci}. Take a micro-break now.`,type:'warn'}};
+  return{t:'All Systems Normal',d:'All vitals stable. HACI in safe range. Continue monitoring.',b:'SAFE',bc:'good',icon:'✓',hBg:'rgba(30,144,255,0.07)',iBg:'rgba(30,144,255,0.14)',notify:null};
+}
+
+function applyAlert(a){
+  $('aTitle').innerText=a.t;$('aBadge').innerText=a.b;$('aBadge').className=`a-badge ${a.bc}`;
+  $('aIcon').innerText=a.icon;$('aTop').style.background=a.hBg;$('aIcon').style.background=a.iBg;
+  $('aDetail').innerText=a.d;
+}
+function setChip(id,cls,val){const el=$(id);if(!el)return;el.className=`sc ${cls}`;const b=el.querySelector('b');if(b&&val!==undefined)b.innerText=val;}
+
+/* ── FETCH ── */
+async function fetchJson(url,ms=8000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(url,{signal:c.signal,cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json();}finally{clearTimeout(t);}}
+
+async function fetchWorker(){
+  const js=await fetchJson(`https://api.thingspeak.com/channels/${WCH}/feeds.json?api_key=${WK}&results=1`);
+  const f=js.feeds?.[0];if(!f)throw new Error('No data');
+  const toN=v=>{const n=Number(v);return Number.isFinite(n)?n:0;};
+  const hr=toN(f.field1),spo2=toN(f.field2),temp=toN(f.field3),accel=toN(f.field4),fall=toN(f.field5),presence=toN(f.field6);
+  $('lastSync').innerText=new Date().toLocaleTimeString();lastUp=now();
+
+  if(presence===0){
+    setChip('presChip','','NO');setChip('anomChip','','—');setChip('fallChip','','—');setChip('haciChip','','—');
+    $('haci').innerText='--';setRing(0,'var(--text3)');
+    $('haciTopbar').innerText='--';
+    const sp=$('statusPill');sp.innerText='Not Detected';sp.style.cssText='';
+    ['hr','spo2','temp','accel'].forEach(id=>$(id).innerText='--');
+    ['hrN','s2N','tpN','acN'].forEach(id=>$(id).innerText='—');
+    ['hrT','s2T','tpT','acT'].forEach(id=>setTile(id,0,'var(--text3)'));
+    ['hrTh','s2Th','tpTh','acTh'].forEach(id=>setThresh(id,'—',''));
+    applyAlert({t:'Awaiting Worker Presence',d:'Move near the sensor device to begin health monitoring.',b:'N/A',bc:'',icon:'⏳',hBg:'rgba(0,229,255,0.06)',iBg:'rgba(0,229,255,0.12)',notify:null});
+    updateHACIBanner(null);showMb(false);stopMb();lastBrk=false;return;
+  }
+
+  const hrOk=hr>0?hr:null,spo2Ok=spo2>=70?spo2:null,tempOk=temp>=34?temp:null,accelOk=accel>0?accel:null;
+  const anomaly=(fall===1||(accelOk!==null&&accelOk>2.2)||(hrOk!==null&&hrOk>130)||(spo2Ok!==null&&spo2Ok<90))?'YES':'NO';
+
+  setChip('presChip','ok','YES');
+  setChip('anomChip',anomaly==='YES'?'crit':'good',anomaly);
+  setChip('fallChip',fall?'crit':'good',fall?'YES':'NO');
+
+  const haci=computeHACI({hrOk,spo2Ok,tempOk,accel:accelOk,fall,anomaly});
+  const b=haciBand(haci);
+  const hc=haciColor(haci);
+
+  // HACI delta + notifications for drops
+  if(prevHACI!==null){
+    const drop=prevHACI-haci;
+    // Notify for significant HACI drop (>8 points) or crossing thresholds
+    if(drop>=8){
+      notifySafe(`HACI Drop Alert`,`HACI fell from ${prevHACI} to ${haci} (−${drop} pts). Check your vitals.`,'warn').catch(()=>{});
+      shiftAlerts++;shiftAlertCountTotal++;
+      $('ssAlerts').innerText=shiftAlerts;$('alertsCount').innerText=shiftAlertCountTotal;
+    }
+    // Crossing into critical
+    if(haci<40&&prevHACI>=40){
+      notifySafe('🚨 CRITICAL HACI',`Score dropped to ${haci}. STOP WORK immediately.`,'crit').catch(()=>{});
+    }
+    // Crossing into warning
+    else if(haci<60&&prevHACI>=60){
+      notifySafe('⚠ Low HACI Warning',`HACI at ${haci}. A micro-break is recommended now.`,'warn').catch(()=>{});
+    }
+  }
+  updateDelta(haci);
+  prevHACI=haci;lastHACI=haci;
+
+  // HACI zone bar
+  $('haciZoneFill').style.width=haci+'%';$('haciZoneFill').style.background=hc;$('haciZoneFill').style.boxShadow=`0 0 6px ${hc}`;
+  $('haciZoneTag').innerText=b.lbl;$('haciZoneTag').style.color=hc;
+  setChip('haciChip',b.cls,b.lbl);
+
+  // Running HACI average
+  haciSum+=haci;haciCount++;
+  const avgH=Math.round(haciSum/haciCount);
+  $('ssAvgHACI').innerText=avgH;$('ssAvgHACI').style.color=haciColor(avgH);
+
+  $('haci').innerText=String(haci);$('haci').style.color=hc;
+  $('haciTopbar').innerText=String(haci);$('haciTopbar').parentElement.style.borderColor=`${hc}44`;
+  setRing(haci,hc);
+
+  const sp=$('statusPill');sp.innerText=b.lbl;
+  sp.style.cssText=`color:${hc};border-color:${hc}33;background:${hc}10;box-shadow:0 0 14px ${hc}22`;
+
+  updateHACIBanner(haci);
+
+  // KPIs
+  $('hr').innerText=hrOk??'--';$('spo2').innerText=spo2Ok??'--';$('temp').innerText=tempOk??'--';$('accel').innerText=accelOk!==null?accelOk.toFixed(2):'--';
+  $('hrN').innerText=noteHR(hrOk);$('s2N').innerText=noteSpo2(spo2Ok);$('tpN').innerText=noteTemp(tempOk);$('acN').innerText=noteAccel(accelOk);
+
+  const hColor=hrOk&&hrOk>120?'var(--red)':hrOk&&hrOk>100?'var(--amber)':'var(--blue)';
+  const sColor=spo2Ok&&spo2Ok<92?'var(--red)':spo2Ok&&spo2Ok<95?'var(--amber)':'var(--blue)';
+  const tColor=tempOk&&tempOk>38?'var(--red)':tempOk&&tempOk>37.5?'var(--amber)':'var(--blue)';
+  const aColor=accelOk&&accelOk>2?'var(--red)':accelOk&&accelOk>1.5?'var(--amber)':'var(--blue)';
+
+  setTile('hrT',hrOk?(hrOk/200)*100:0,hColor);
+  setTile('s2T',spo2Ok??0,sColor);
+  setTile('tpT',tempOk?((tempOk-34)/8)*100:0,tColor);
+  setTile('acT',accelOk?(accelOk/4)*100:0,aColor);
+
+  // Threshold badges
+  setThresh('hrTh',hrOk?hrOk>120?'HIGH':hrOk>100?'ELEV':'NORMAL':'—',hrOk&&hrOk>120?'crit':hrOk&&hrOk>100?'warn':'ok');
+  setThresh('s2Th',spo2Ok?spo2Ok<92?'LOW':spo2Ok<95?'WATCH':'GOOD':'—',spo2Ok&&spo2Ok<92?'crit':spo2Ok&&spo2Ok<95?'warn':'ok');
+  setThresh('tpTh',tempOk?tempOk>38?'HIGH':tempOk>37.5?'WARM':'NORMAL':'—',tempOk&&tempOk>38?'crit':tempOk&&tempOk>37.5?'warn':'ok');
+  setThresh('acTh',accelOk?accelOk>2?'HIGH':accelOk>1.5?'ACTIVE':'STABLE':'—',accelOk&&accelOk>2?'crit':accelOk&&accelOk>1.5?'warn':'ok');
+
+  const action=decideAction({haci,fall,spo2Ok,tempOk,anomaly});
+  if(action.b==='BREAK'||action.b==='CRITICAL'){showMb(true);if(!lastBrk){resetMb(5);$('mbNote').innerText='Take rest now. Press Start to begin timer.';}lastBrk=true;}
+  else{showMb(false);stopMb();lastBrk=false;}
+  applyAlert(action);
+
+  if(action.notify){
+    const k=action.notify.title+'|'+String(haci);
+    if(k!==lastNotifKey){
+      notifySafe(action.notify.title,action.notify.body,action.notify.type).catch(()=>{});
+      lastNotifKey=k;shiftAlerts++;shiftAlertCountTotal++;
+      $('ssAlerts').innerText=shiftAlerts;$('alertsCount').innerText=shiftAlertCountTotal;
+    }
+  }
+}
+
+async function fetchEnv(){
+  const js=await fetchJson(`https://api.thingspeak.com/channels/${ECH}/feeds.json?api_key=${EK}&results=1`);
+  const f=js.feeds?.[0]||{};
+  const toN=v=>{const n=Number(v);return Number.isFinite(n)?n:null;};
+  const clean=n=>(n===null||n<0)?null:n;
+  const t=clean(toN(f.field1)),hum=clean(toN(f.field2)),sound=clean(toN(f.field3)),air=clean(toN(f.field4)),dust=clean(toN(f.field5)),flame=toN(f.field6);
+
+  $('envTemp').innerText=t??'--';$('envHum').innerText=hum??'--';$('envSound').innerText=sound??'--';$('envAir').innerText=air??'--';$('envDust').innerText=dust??'--';
+  $('envUpdated').innerText=new Date().toLocaleTimeString();
+
+  // Temp
+  const tC=t!==null?(t>35?'var(--red)':t>28?'var(--amber)':'var(--cyan)'):'var(--blue3)';
+  const tSub=t!==null?(t>35?'HIGH — heat risk':t>28?'Warm zone':'Normal'):'Field 1';
+  setEnvTile('eTmpT','eTmpBar','envTempS',tC,t!==null?(t/50)*100:0,tSub);
+
+  // Humidity
+  const hC=hum!==null?(hum>80?'var(--amber)':hum>60?'var(--sky)':'var(--cyan)'):'var(--blue3)';
+  const hSub=hum!==null?(hum>80?'High — discomfort risk':hum>60?'Moderate':'Comfortable'):'Field 2';
+  setEnvTile('eHumT','eHumBar','envHumS',hC,hum!==null?hum:0,hSub);
+
+  // Sound
+  const sC=sound!==null?(sound>2000?'var(--red)':sound>1000?'var(--amber)':'var(--blue)'):'var(--blue3)';
+  const sSub=sound!==null?(sound>2000?'LOUD — hearing risk':sound>1000?'Elevated noise':'Normal'):'Field 3';
+  setEnvTile('eSndT','eSndBar','envSndS',sC,sound!==null?(sound/4095)*100:0,sSub);
+
+  // Air
+  const aC=air!==null?(air>600?'var(--red)':air>300?'var(--amber)':'var(--blue)'):'var(--blue3)';
+  const aSub=air!==null?(air>600?'POOR — use mask':air>300?'Moderate':'Good quality'):'Field 4';
+  setEnvTile('eAirT','eAirBar','envAirS',aC,air!==null?(air/1023)*100:0,aSub);
+
+  // Dust
+  const dC=dust!==null?(dust>700?'var(--red)':dust>400?'var(--amber)':'var(--blue)'):'var(--blue3)';
+  const dSub=dust!==null?(dust>700?'HIGH — mask required':dust>400?'Elevated':'Low'):'Field 5';
+  setEnvTile('eDstT','eDstBar','envDstS',dC,dust!==null?(dust/1023)*100:0,dSub);
+
+  // Flame
+  if(flame===1){
+    $('envFlame').innerHTML=`<span style="color:var(--red);font-family:var(--orb);font-size:14px;text-shadow:0 0 10px var(--red)">DETECTED</span>`;
+    setEnvTile('eFlmT','eFlmBar','envFlmS','var(--red)',100,'⚠ FLAME DETECTED');
+    notifySafe('🔥 Flame Detected','Flame sensor triggered in your zone. Evacuate immediately.','crit').catch(()=>{});
+  } else if(flame===0){
+    $('envFlame').innerHTML=`<span style="color:var(--blue);font-family:var(--orb);font-size:14px">CLEAR</span>`;
+    setEnvTile('eFlmT','eFlmBar','envFlmS','var(--blue)',0,'Zone clear');
+  } else{$('envFlame').innerText='--';}
+
+  const notes=[];
+  if(flame===1)notes.push('⚠ Flame');
+  if(sound!==null&&sound>2000)notes.push('⚠ Noise spike');
+  if(air!==null&&air>800)notes.push('⚠ Air poor');
+  if(dust!==null&&dust>900)notes.push('⚠ Dust high');
+  if(t!==null&&t>38)notes.push('⚠ Zone temp high');
+  $('envNote').innerText=notes.length?'ALERTS: '+notes.join('  ·  '):'Zone conditions nominal — all sensors reading.';
+}
+
+async function tick(){
+  try{await fetchWorker();}catch(e){$('statusPill').innerText='OFFLINE';$('haci').innerText='--';$('haciTopbar').innerText='--';}
+  try{await fetchEnv();}catch(e){$('envNote').innerText='Env feed error — '+( e?.message||'check connection');}
+}
+
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
